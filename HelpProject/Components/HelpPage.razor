@@ -1,0 +1,177 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@using HelpProject.Model
+@using HelpProject.Services
+@inject JsonFileHelpService HelpService;
+@using Microsoft.AspNetCore.Http;
+@inject IHttpContextAccessor httpContextAccessor;
+@inject NavigationManager NavManager
+
+<div>
+    <div class="login">
+        <h1>Post Enquiry Here</h1>
+
+        <form method="post">
+            @if (@message != null)
+            {
+                <p class="text-danger">Message: @message</p>
+            }
+            <label>Subject</label>
+            <p>
+                <input type="text" value="@HelpSubject" @onchange="@((ChangeEventArgs __e) => HelpSubject = __e.Value.ToString())" placeholder="Subject">
+            </p>
+            <label>Detail</label>
+            <p>
+                <textarea style="border: 1px solid #eee; border-radius: 5px; width: 95%" value="@HelpDetail" @onchange="@((ChangeEventArgs __e) => HelpDetail = __e.Value.ToString())" placeholder="Detail" />
+
+            </p>
+
+            <p class="submit"><input type="button" @onclick="(e => SubmitHelp(HelpSubject, HelpDetail, UserName))" value="Submit"></p>
+            <hr />
+        </form>
+        <h4 style="font-size: large; text-align: center;">Request History</h4>
+        <div>
+            @foreach (var help in HelpService.GetHelps())
+            {
+                <div class="card" style="margin: 5px 0 5px 5px">
+                    <div class="card-body" style="padding: 0; margin: 0;">
+                        <span class="text-muted" style="background-color: #dcdcdc; border-radius: 5px; font-size:small; margin: 5px 5px 0; ">
+                            @help.UserName
+                            <span style="float : right; margin-top: -1px ">
+                                @help.TimeStamp
+                        </span>
+                    </span>
+                    <p style="padding: 0; margin: 5px 0 -10px 5px; font-size: small">@help.Subject</p>
+                    <hr />
+                    <p style="padding: 0; margin: -5px 0 -5px 5px;">@help.Detail</p>
+                    <hr />
+                    <small class="text-muted">
+                        @if (@help.Response != null)
+                        {
+                            @foreach (Reply reply in @help.Response)
+                            {
+                                <span style="margin: 0 5px 5px 5px; font-size: small; background-color: #ececec; color:#000000; border-radius: 5px; padding: 5px">
+                                    <span class="text-muted" style="background-color: #dcdcdc; border-radius: 5px; font-size:small; margin-top: 2px ">
+                                        @reply.UserName
+                                        <span style=" float : right; margin-top: -1px ">
+                                            @reply.TimeStamp
+                                    </span>
+                                </span>
+                                @reply.reply
+                            </span>
+                        }
+                        }
+                    </small>
+                    </div>
+                    <div class="card-footer" style="height: 35px; padding: 5px">
+
+                        <small class="text-muted">
+                            <button @onclick="(e => SelectHelp(help?.Id ?? string.Empty))"
+                                    data-toggle="modal" data-target="#helpModal" class="btn btn-primary" style=" float: right; margin-top: -3px; width: 45px; height: 30px; padding: 3px; font-size:small">
+                                Reply
+                            </button>
+                        </small>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpSubject" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        @if (selectedHelp != null)
+        {
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h class="modal-title" id="helpSubject">@selectedHelp.Subject</h>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="card-text">@selectedHelp.Detail</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="text" value="@ReplyInput" @onchange="@((ChangeEventArgs __e) => ReplyInput = __e.Value.ToString())" placeholder="Type your response" required />
+                    <span class="btn btn-sm btn-primary" @onclick="(e => SubmitResponse(ReplyInput, UserName))">Send</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+@code {
+
+    public string UserName { get; set; }
+    public string ReplyInput { get; set; }
+    public string HelpSubject { get; set; }
+    public string HelpDetail { get; set; }
+    public string message;
+    Help selectedHelp;
+    string selectedHelpId;
+
+    void SelectHelp(string helpId)
+    {
+        selectedHelpId = helpId;
+        selectedHelp = HelpService.GetHelps().First(x => x.Id == helpId);
+        //GetCurrent();
+    }
+
+    void SubmitResponse(string reply, string username)
+    {
+
+        System.Console.WriteLine($"Reply received for {selectedHelp?.Id}: {reply}");
+        if (selectedHelpId == null)
+            return;
+        Reply replyObj = new Reply();
+        replyObj.reply = reply;
+        replyObj.UserName = username;
+        HelpService.AddReply(selectedHelpId, replyObj);
+        SelectHelp(selectedHelpId);
+    }
+
+    void SubmitHelp(string subject, string detail, string username)
+    {
+        // generate random id
+        Guid myuuid = Guid.NewGuid();
+        string idString = myuuid.ToString();
+        Help help = new Help();
+        message = UserName;
+        if (subject != null && detail != null)
+        {
+
+            help.Subject = subject;
+            help.Detail = detail;
+            help.UserName = username;
+            help.Id = idString;
+            HelpService.PostHelp(help);
+
+
+        }
+        else
+        {
+            message = "Help info not provided " + subject + " " + detail + " " + UserName;
+        }
+
+
+    }
+
+    protected override void OnInitialized()
+    {
+        //UserName = httpContextAccessor.HttpContext.Request.Query["logedUser"];
+        // the page url and retriev the user name from therein.
+        string PageUrl = NavManager.Uri;
+        try {
+            UserName = PageUrl.Split("=")[1];
+        } catch (IndexOutOfRangeException iex) {
+            Console.WriteLine(iex.Message);
+        }
+
+    }
+}

@@ -1,0 +1,53 @@
+﻿@page
+@model HelpProject.Pages.RegisterModel
+@{
+}
+@{
+    ViewData["Title"] = "Register";
+    ViewData["Action"] = "Login";
+}
+<div>
+    <div class="login">
+        <h1>@ViewData["Title"]</h1>
+
+        <form method="post">
+            @if (@Model.Message != null)
+            {
+                <p class="text-danger">Message: @Model.Message</p>
+            }
+            @foreach (var user in Model.Users)
+            {
+                <!-- <p> @user.UserName</p> -->
+            }
+            <div asp-validation-summary="ModelOnly"></div>
+            <label>First Name</label>
+            <p>
+                <input asp-for="User.FirstName" placeholder="First Name">
+                <span asp-validation-for="User.FirstName" class="text-danger"></span>
+            </p>
+            <div asp-validation-summary="ModelOnly"></div>
+            <label>Last Name</label>
+            <p>
+                <input asp-for="User.LastName" placeholder="Last Name">
+                <span asp-validation-for="User.LastName" class="text-danger"></span>
+            </p>
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <label>Username</label>
+            <p>
+                <input asp-for="User.UserName" placeholder="Username">
+                <span asp-validation-for="User.UserName" class="text-danger"></span>
+            </p>
+            <div asp-validation-summary="ModelOnly"></div>
+
+            <label>Password</label>
+            <p>
+                <input asp-for="User.Password" placeholder="Password">
+                <span asp-validation-for="User.Password" class="text-danger"></span>
+            </p>
+
+            <p class="submit"><input type="submit" asp-page-handler="UserRegister" value="Submit"></p>
+            <hr />
+        </form>
+    </div>
+</div>

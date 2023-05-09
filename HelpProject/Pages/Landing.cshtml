@@ -1,0 +1,11 @@
+﻿@page
+@using HelpProject.Components
+@model PrivacyModel
+@{
+    ViewData["Title"] = "Privacy Policy";
+    ViewData["Action"] = "Logout";
+    ViewData["user"] = Request.Query["logedUser"];
+}
+@(await Html.RenderComponentAsync<HelpPage>(RenderMode.ServerPrerendered))
+
+<script src="_framework/blazor.server.js"></script>
